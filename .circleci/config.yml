@@ -60,7 +60,36 @@ jobs: # basic units of work in a run
           name: "Print all envs"
           command: env
 
-workflows: # a single workflow with a single job called build
+  matrix1:
+    parameters:
+      param1:
+        type: string
+    docker:
+      - image: cimg/base:current
+    steps:
+      - run:
+          name: "Running '<< parameters.param1 >>'"
+          command: echo "param1=${PARAM1}"
+          environment:
+            PARAM1: "<< parameters.param1 >>"
+
+  matrix2:
+    parameters:
+      param1:
+        type: string
+      param2:
+        type: string
+    docker:
+      - image: cimg/base:current
+    steps:
+      - run:
+          name: "Running '<< parameters.param1 >>' and '<< parameters.param2 >>'"
+          command: echo "param1=${PARAM1}, param2=${PARAM2}"
+          environment:
+            PARAM1: "<< parameters.param1 >>"
+            PARAM2: "<< parameters.param2 >>"
+
+workflows:
   build:
     jobs:
       - build:
@@ -69,3 +98,17 @@ workflows: # a single workflow with a single job called build
           context: Testing-Env-Vars
           requires:
             - build
+
+  other_build:
+    jobs:
+      - matrix1:
+          matrix:
+            parameters:
+              param1: ["value1a", "value1b"]
+      - matrix2:
+          matrix:
+            parameters:
+              param1: ["value1a", "value1b"]
+              param2: ["value2a", "value2b"]
+          requires:
+            - matrix1-<< matrix.param1 >>
